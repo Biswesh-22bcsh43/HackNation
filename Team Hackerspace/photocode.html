@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Take a Photo</title>
+<style>
+    #photo-preview {
+        max-width: 100%;
+        max-height: 100%;
+    }
+</style>
+</head>
+<body>
+
+<h1>Take a Photo</h1>
+
+<button onclick="takePhoto()">Take Photo</button>
+
+<div id="photo-container"></div>
+
+<script>
+function takePhoto() {
+    if (!("mediaDevices" in navigator) || !("getUserMedia" in navigator.mediaDevices)) {
+        alert("Sorry, your browser doesn't support accessing the camera. Please try another browser.");
+        return;
+    }
+
+    const constraints = {
+        video: {
+            facingMode: "environment" // Use the rear camera if available
+        }
+    };
+
+    navigator.mediaDevices.getUserMedia(constraints)
+    .then(function(stream) {
+        const video = document.createElement("video");
+        video.srcObject = stream;
+        video.autoplay = true;
+
+        const photoContainer = document.getElementById("photo-container");
+        photoContainer.innerHTML = ""; // Clear previous content
+        photoContainer.appendChild(video);
+
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+
+        video.addEventListener("loadedmetadata", function() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+        });
+
+        // Capture photo when button is clicked
+        const captureButton = document.createElement("button");
+        captureButton.textContent = "Capture";
+        captureButton.onclick = function() {
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const photo = document.createElement("img");
+            photo.src = canvas.toDataURL("image/png");
+            photo.id = "photo-preview";
+            photoContainer.innerHTML = ""; // Clear previous content
+            photoContainer.appendChild(photo);
+            
+            // Stop video stream
+            stream.getVideoTracks().forEach(track => track.stop());
+            video.remove();
+        };
+        photoContainer.appendChild(captureButton);
+    })
+    .catch(function(error) {
+        console.error("Error accessing the camera: ", error);
+    });
+}
+</script>
+
+</body>
+</html>
